@@ -5,10 +5,15 @@ import logging
 import os
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
+import CloudFlare
 
 load_dotenv()
 
 bucket_name = os.getenv("BUCKET_NAME")
+bucket_region = os.getenv("BUCKET_REGION")
+cloudflare_token = os.getenv("CLOUDFLARE_TOKEN")
+zone_id = os.getenv("ZONE_ID")
+record_name = os.getenv("RECORD_NAME")
 
 
 def create_bucket(bucket_name, region=None):
@@ -63,5 +68,23 @@ def put_website(bucket_name):
         }
     )
 
-create_bucket(bucket_name)
+def get_endpoint(bucket_name, bucket_region):
+    return ''.join((bucket_name, '.s3-website.', bucket_region, '.amazonaws.com'))
+
+
+def put_dns_record(website_endpoint, cloudflare_token, zone_id, record_name):
+    cf = CloudFlare.CloudFlare(token=cloudflare_token)
+    cf.zones.dns_records.post(zone_id, data = {
+        'name': record_name,
+        'type': 'CNAME',
+        'content': website_endpoint,
+        'proxied': True
+    }
+    )
+
+create_bucket(bucket_name, bucket_region)
 put_website(bucket_name)
+website_endpoint = get_endpoint(bucket_name, bucket_region)
+put_dns_record(website_endpoint, cloudflare_token, zone_id, record_name)
+
+
