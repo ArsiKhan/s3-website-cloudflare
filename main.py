@@ -68,6 +68,8 @@ def put_website(bucket_name):
         }
     )
 
+    s3.upload_file('index.html', bucket_name, 'index.html')
+
 def get_endpoint(bucket_name, bucket_region):
     return ''.join((bucket_name, '.s3-website.', bucket_region, '.amazonaws.com'))
 
@@ -79,12 +81,14 @@ def put_dns_record(website_endpoint, cloudflare_token, zone_id, record_name):
         'type': 'CNAME',
         'content': website_endpoint,
         'proxied': True
-    }
+        }
     )
 
-create_bucket(bucket_name, bucket_region)
-put_website(bucket_name)
-website_endpoint = get_endpoint(bucket_name, bucket_region)
-put_dns_record(website_endpoint, cloudflare_token, zone_id, record_name)
+if __name__ == "__main__":
+    
+    create_bucket(bucket_name, bucket_region)
+    put_website(bucket_name)
+    website_endpoint = get_endpoint(bucket_name, bucket_region)
+    put_dns_record(website_endpoint, cloudflare_token, zone_id, record_name)
 
 
